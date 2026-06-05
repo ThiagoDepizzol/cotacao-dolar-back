@@ -49,17 +49,33 @@ public class MoedaService {
 
     public Optional<Moeda> getCotacaoDolarDia() throws IOException, MalformedURLException, ParseException {
 
-        final Instant validDate = getValidDate();
+        Instant validDate = getValidDate();
 
         final String formattedDate = DateTimeFormatter.ofPattern("MM-dd-yyyy")
                 .withZone(ZoneId.systemDefault())
                 .format(validDate);
 
-        final String urlString = "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?%40dataCotacao='" + formattedDate + "'&%24format=json";
+        JsonArray cotacoesArray = integrationService.requestByDate(formattedDate);
 
-        final JsonArray cotacoesArray = integrationService.request(urlString);
+        do {
+
+            final ZoneId zone = ZoneId.systemDefault();
+
+            validDate = LocalDate.ofInstant(validDate, zone).minusDays(1)
+                    .atStartOfDay(zone)
+                    .toInstant();
+
+            final String dataFormatadaAnterior = DateTimeFormatter.ofPattern("MM-dd-yyyy")
+                    .withZone(ZoneId.systemDefault())
+                    .format(validDate);
+
+            cotacoesArray = integrationService.requestByDate(dataFormatadaAnterior);
+
+
+        } while (cotacoesArray == null || cotacoesArray.isEmpty());
 
         final List<Moeda> moedas = new ArrayList<>();
+
 
         for (JsonElement obj : cotacoesArray) {
 
@@ -106,5 +122,6 @@ public class MoedaService {
                 .filter(quotation -> quotation.preco < currentQuotation.preco)
                 .collect(Collectors.toList());
     }
+
 
 }

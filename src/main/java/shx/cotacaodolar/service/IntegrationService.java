@@ -15,6 +15,13 @@ import java.net.URL;
 @Service
 public class IntegrationService {
 
+    public JsonArray requestByDate(final String data) throws IOException {
+
+        final String urlString = "https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarDia(dataCotacao=@dataCotacao)?%40dataCotacao='" + data + "'&%24format=json";
+
+        return request(urlString);
+    }
+
     public JsonArray request(final String urlString) throws IOException {
 
         URL url = new URL(urlString);
